@@ -119,6 +119,7 @@ auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt,
     import std.traits;
     import std.bigint;
     import std.datetime;
+    import std.uuid;
 
     duckdb_type type = duckdb_get_type_id(lt);
 
@@ -309,6 +310,36 @@ auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt,
             return createSysTimeFromVector(data, rowIndex, ts => SysTime.fromUnixTime(ts, UTC()));
         case DUCKDB_TYPE_TIMESTAMP_NS:
             onDuckDBTypeException("TIMESTAMP_NS is not supported because D's SysTime doesn't support nano-second precision");
+        default:
+            onVectorTypeMismatch(T.stringof, type);
+        }
+    } else static if (is(T == UUID)) {
+        switch (type) {
+        case DUCKDB_TYPE_UUID:
+            @trusted nothrow static void numToBytes(ref ubyte[16] bytes, size_t base, ulong num)
+            {
+                ubyte* ptr = cast(ubyte*)&num;
+                foreach (i; 0..8)
+                    bytes[base + i] = *(ptr + i);
+            }
+
+            enum FlipForUpper = ulong(1) << 63;  // Need flip back. See uuid.cpp in duckdb code.
+            duckdb_hugeint hint = (cast(duckdb_hugeint*)data)[rowIndex];
+            ubyte[16] bytes;
+
+            version (LittleEndian)
+            {
+                import core.bitop : bswap;
+                numToBytes(bytes, 0, bswap(hint.upper ^ FlipForUpper));
+                numToBytes(bytes, 8, bswap(hint.lower));
+            }
+            else
+            {
+                numToBytes(bytes, 0, hint.upper ^ FlipForUpper);
+                numToBytes(bytes, 8, hint.lower);
+            }
+
+            return UUID(bytes);
         default:
             onVectorTypeMismatch(T.stringof, type);
         }

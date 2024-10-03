@@ -63,7 +63,7 @@ void main()
 | MAP          | V[K]                   |                                                                       |
 | STRUCT       | struct                 | Current implementation doesn't check field names                      |
 | UNION        |                        | TODO                                                                  |
-| UUID         |                        | TODO                                                                  |
+| UUID         | std.uuid.UUID          |                                                                       |
 
 ## Special cases
 

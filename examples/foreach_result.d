@@ -73,6 +73,14 @@ void main()
         foreach (SysTime t1, SysTime t2, SysTime t3; r)
             writeln(t1, ", ", t2, ", ", t3);
     }
+    {
+        writeln("> UUID");
+        conn.queryWithoutResult("CREATE TABLE ids (id INTEGER, uid UUID);");
+        conn.queryWithoutResult("INSERT INTO ids VALUES (1, '4ac7a9e9-607c-4c8a-84f3-843f0191e3fd'), (2, 'fac7a901-307c-4ce1-34fa-043f0a91e3f0');");
+        auto r = conn.query("SELECT * FROM ids;");
+        foreach (int a, UUID u; r)
+            writeln(a, ", ",  u);
+    }
 
     conn.disconnect();
     db.close();
