@@ -20,7 +20,7 @@ void main()
     conn.queryWithoutResult("CREATE TABLE integers (i INTEGER, j INTEGER);");
     conn.queryWithoutResult("INSERT INTO integers VALUES (3, 4), (5, 6), (7, NULL);");
     auto r = conn.query("SELECT * FROM integers;");
-    foreach (int a, Nullable!int b; r)  // Specify argument types implicitly
+    foreach (int a, Nullable!int b; r)  // Specify argument types explicitly
         writeln(a, ", ",  b);
 
     conn.disconnect();
@@ -30,36 +30,40 @@ void main()
 
 # DuckDB and D Types
 
-| DuckDB type | D type  | Description                                                           |
-|-------------|---------|-----------------------------------------------------------------------|
-| BOOLEAN     | bool    |                                                                       |
-| TINYINT     | byte    |                                                                       |
-| SMALLINT    | short   |                                                                       |
-| INTEGER     | int     |                                                                       |
-| BIGINT      | long    |                                                                       |
-| HUGEINT     | BigInt  |                                                                       |
-| UTINYINT    | ubyte   |                                                                       |
-| USMALLINT   | ushort  |                                                                       |
-| UINTEGER    | uint    |                                                                       |
-| UBIGINT     | ulong   |                                                                       |
-| UHUGEINT    | BigInt  |                                                                       |
-| FLOAT       | float   |                                                                       |
-| DOUBLE      | double  |                                                                       |
-| DECIMAL     |         | TODO: Phobos doesn't have BigFloat/BigDecimal, so support is limited  |
-| VARCHAR     | string  | `wstring` and `dstring` are also supported                            |
-| BLOB        | byte[]  |                                                                       |
-| BITSTRING   |         | TODO                                                                  |
-| ENUM        | string  |                                                                       |
-| DATE        | Date    |                                                                       |
-| TIME        |         | TODO but use `TIMESTAMP` instead                                      |
-| TIMESTAMP   | SysTime | `TIMESTAMP_NS` is not supported because `SysTime` is hnsecs precision |
-| INTERVAL    |         | TODO                                                                  |
-| ARRAY       | T[]     |                                                                       |
-| LIST        | T[]     |                                                                       |
-| MAP         | V[K]    |                                                                       |
-| STRUCT      | struct  | Current implementation doesn't check field names                      |
-| UNION       |         | TODO                                                                  |
-| UUID        |         | TODO                                                                  |
+| DuckDB type  | D type                 | Description                                                           |
+|--------------|------------------------|-----------------------------------------------------------------------|
+| BOOLEAN      | bool                   |                                                                       |
+| TINYINT      | byte                   |                                                                       |
+| SMALLINT     | short                  |                                                                       |
+| INTEGER      | int                    |                                                                       |
+| BIGINT       | long                   |                                                                       |
+| HUGEINT      | BigInt                 |                                                                       |
+| UTINYINT     | ubyte                  |                                                                       |
+| USMALLINT    | ushort                 |                                                                       |
+| UINTEGER     | uint                   |                                                                       |
+| UBIGINT      | ulong                  |                                                                       |
+| UHUGEINT     | BigInt                 |                                                                       |
+| FLOAT        | float                  |                                                                       |
+| DOUBLE       | double                 |                                                                       |
+| DECIMAL      |                        | TODO: Phobos doesn't have BigFloat/BigDecimal, so support is limited  |
+| VARCHAR      | string/wstring/dstring |                                                                       |
+| BLOB         | byte[]                 |                                                                       |
+| BITSTRING    |                        | TODO                                                                  |
+| ENUM         | string                 |                                                                       |
+| DATE         | Date                   |                                                                       |
+| TIME         |                        | TODO but use `TIMESTAMP` instead                                      |
+| TIMESTAMP    | SysTime                |                                                                       |
+| TIMESTAMPTZ  | SysTime                |                                                                       |
+| TIMESTAMP_S  | SysTime                |                                                                       |
+| TIMESTAMP_MS | SysTime                |                                                                       |
+| TIMESTAMP_NS | SysTime                | `TIMESTAMP_NS` is not supported because `SysTime` is hnsecs precision |
+| INTERVAL     |                        | TODO                                                                  |
+| ARRAY        | T[]                    |                                                                       |
+| LIST         | T[]                    |                                                                       |
+| MAP          | V[K]                   |                                                                       |
+| STRUCT       | struct                 | Current implementation doesn't check field names                      |
+| UNION        |                        | TODO                                                                  |
+| UUID         |                        | TODO                                                                  |
 
 ## Special cases
 
