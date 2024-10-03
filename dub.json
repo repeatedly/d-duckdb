@@ -1,0 +1,11 @@
+{
+    "name": "duckdb",
+    "authors": ["Masahiro Nakagawa"],
+    "homepage": "https://github.com/repeatedly/d-duckdb",
+    "copyright": "Copyright © 2024, Masahiro Nakagawa",
+    "description": "DuckDB client for D",
+    "license": "BSL-1.0",
+    "targetType": "library",
+    "libs": ["duckdb"],
+    "lflags-osx": ["-L/opt/homebrew/lib"]
+}
