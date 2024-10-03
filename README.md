@@ -37,12 +37,12 @@ void main()
 | SMALLINT     | short                  |                                                                       |
 | INTEGER      | int                    |                                                                       |
 | BIGINT       | long                   |                                                                       |
-| HUGEINT      | BigInt                 |                                                                       |
+| HUGEINT      | std.bigint.BigInt      |                                                                       |
 | UTINYINT     | ubyte                  |                                                                       |
 | USMALLINT    | ushort                 |                                                                       |
 | UINTEGER     | uint                   |                                                                       |
 | UBIGINT      | ulong                  |                                                                       |
-| UHUGEINT     | BigInt                 |                                                                       |
+| UHUGEINT     | std.bigint.BigInt      |                                                                       |
 | FLOAT        | float                  |                                                                       |
 | DOUBLE       | double                 |                                                                       |
 | DECIMAL      |                        | TODO: Phobos doesn't have BigFloat/BigDecimal, so support is limited  |
@@ -50,13 +50,13 @@ void main()
 | BLOB         | byte[]                 |                                                                       |
 | BITSTRING    |                        | TODO                                                                  |
 | ENUM         | string                 |                                                                       |
-| DATE         | Date                   |                                                                       |
+| DATE         | std.datetime.Date      |                                                                       |
 | TIME         |                        | TODO but use `TIMESTAMP` instead                                      |
-| TIMESTAMP    | SysTime                |                                                                       |
-| TIMESTAMPTZ  | SysTime                |                                                                       |
-| TIMESTAMP_S  | SysTime                |                                                                       |
-| TIMESTAMP_MS | SysTime                |                                                                       |
-| TIMESTAMP_NS | SysTime                | `TIMESTAMP_NS` is not supported because `SysTime` is hnsecs precision |
+| TIMESTAMP    | std.datetime.SysTime   |                                                                       |
+| TIMESTAMPTZ  | std.datetime.SysTime   |                                                                       |
+| TIMESTAMP_S  | std.datetime.SysTime   |                                                                       |
+| TIMESTAMP_MS | std.datetime.SysTime   |                                                                       |
+| TIMESTAMP_NS |                        | `TIMESTAMP_NS` is not supported because `SysTime` is hnsecs precision |
 | INTERVAL     |                        | TODO                                                                  |
 | ARRAY        | T[]                    |                                                                       |
 | LIST         | T[]                    |                                                                       |
