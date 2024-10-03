@@ -81,6 +81,14 @@ void main()
         foreach (int a, UUID u; r)
             writeln(a, ", ",  u);
     }
+    {
+        writeln("> BITSTRING");
+        conn.queryWithoutResult("CREATE TABLE bits (bit BITSTRING);");
+        conn.queryWithoutResult("INSERT INTO bits VALUES ('101010'), (bitstring('0101011', 12)), (123::BITSTRING);");
+        auto r = conn.query("SELECT * FROM bits;");
+        foreach (string b; r)
+            writeln(b);
+    }
 
     conn.disconnect();
     db.close();

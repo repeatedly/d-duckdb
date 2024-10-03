@@ -48,7 +48,7 @@ void main()
 | DECIMAL      |                        | TODO: Phobos doesn't have BigFloat/BigDecimal, so support is limited  |
 | VARCHAR      | string/wstring/dstring |                                                                       |
 | BLOB         | byte[]                 |                                                                       |
-| BITSTRING    |                        | TODO                                                                  |
+| BITSTRING    | string                 |                                                                       |
 | ENUM         | string                 |                                                                       |
 | DATE         | std.datetime.Date      |                                                                       |
 | TIME         |                        | TODO but use `TIMESTAMP` instead                                      |

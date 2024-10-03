@@ -226,6 +226,22 @@ auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt,
                 return cast(T)(ptr.fromStringz).dup;
             }
             onDuckDBTypeException("Can't get enum value by unexpected data");
+        case DUCKDB_TYPE_BIT:
+            auto str = (cast(duckdb_string_t*)data)[rowIndex];
+            auto len = duckdb_string_t_length(str);
+            auto src = duckdb_string_t_data(&str);
+            auto padding = cast(ubyte)src[0];  // First byte is padding info. See bit.cpp
+            auto bitLen = (len - 1) * 8 - padding;
+
+            char[] res = new char[](bitLen);
+            size_t resIndex;
+            for (size_t i = padding; i < 8; i++)  // Second byte is padding affected area
+                res[resIndex++] = src[1] & (1 << (7 - i)) ? '1' :  '0';
+            for (size_t i = 2; i < len; i++)  // Remaining bytes
+                for (size_t j = 0; j < 8; j++)
+                    res[resIndex++] = src[i] & (1 << (7 - j)) ? '1' :  '0';
+
+            return cast(string)res;
         default:
             onVectorTypeMismatch(T.stringof, type);
         }
