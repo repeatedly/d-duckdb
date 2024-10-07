@@ -28,6 +28,34 @@ void main()
 }
 ```
 
+## Appender: Faster bulk insertion
+
+```D
+import duckdb;
+import std;
+
+void main()
+{
+    auto db = new Database(null);  // null for in-memory database
+    auto conn = db.connect();
+
+    writeln(duckdbVersion);
+    conn.queryWithoutResult("CREATE TABLE apps (i SMALLINT, str VARCHAR, ts TIMESTAMP);");
+    auto appender = conn.appender("apps");
+    foreach (i; 0..3)
+        appender.appendRow(i, text("Name", i), Clock.currTime);
+    appender.destroy();
+
+    auto r = conn.query("SELECT * FROM apps;");
+    foreach (short i, string str, SysTime ts; r)
+        writeln("id: ", i, ", name: ", str, ", timestampe: ", ts);
+    r.destroy();
+
+    conn.disconnect();
+    db.close();
+}
+```
+
 # DuckDB and D Types
 
 | DuckDB type  | D type                 | Description                                                           |
@@ -70,6 +98,7 @@ void main()
 - NULL
 
 Use `std.typecons.Nullable` to accept NULL for basic types, e.g. `Nullable!int`.
+Without `Nullable`, client returns `.init` value.
 
 - Infinity for DATA and TIMESTAMP
 
@@ -80,7 +109,6 @@ Use `std.typecons.Nullable` to accept NULL for basic types, e.g. `Nullable!int`.
 - Support TODO DuckDB types
 - Support more APIs
   - Prepared Statements
-  - Appender
   - and more
 - Improve API design
 - Add unittests
