@@ -105,4 +105,56 @@ class Database
     {
         return duckdb_create_task_state(_db);
     }
+
+    void addReplacementScan(ReplacementScanCallback callback)
+    {
+        import std.functional : toDelegate;
+
+        auto del = toDelegate(callback);
+        duckdb_add_replacement_scan(_db, &replacementCallback, del.ptr, &delete_callback);
+    }
+}
+
+// Replacement Scan
+
+import std.variant : Variant;
+
+extern(C): @trusted:
+
+// TODO : Delegate support
+alias ReplacementScanCallback = Variant function(string tableName, out string funcName);
+
+void delete_callback(void* data) nothrow {}
+
+void replacementCallback(duckdb_replacement_scan_info info, const(char)* tableName, void* data)
+{
+    import std.string : fromStringz, toStringz;
+
+    static void setNumParameter(ref duckdb_replacement_scan_info info, int num)
+    {
+        auto val = duckdb_create_int64(num);
+        duckdb_replacement_scan_add_parameter(info, val);
+        duckdb_destroy_value(&val);
+    }
+
+    string funcName;
+    ReplacementScanCallback cb = cast(ReplacementScanCallback)data;
+
+    auto res = cb(cast(string)tableName.fromStringz, funcName);
+
+    duckdb_replacement_scan_set_function_name(info, funcName.toStringz);
+
+    // Support int and int[] for "range" table function.
+    // TODO : Support other table functions if needed.
+    int* n = res.peek!(int);
+    if (n) {
+        setNumParameter(info, *n);
+        return;
+    }
+    int[]* nums = res.peek!(int[]);
+    if (nums) {
+        foreach (num; *nums)
+            setNumParameter(info, num);
+        return;
+    }
 }

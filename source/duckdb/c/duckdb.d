@@ -2,9 +2,6 @@ module duckdb.c.duckdb;
 
 // Convert duckdb.h via ctod
 
-@nogc @trusted nothrow:
-extern(C): __gshared:
-
 //===----------------------------------------------------------------------===//
 //
 //                         DuckDB
@@ -20,6 +17,8 @@ extern(C): __gshared:
 
 public import core.stdc.stdint;
 public import core.stdc.stddef;
+
+@trusted: extern(C): __gshared:
 
 //===--------------------------------------------------------------------===//
 // Enums
@@ -751,6 +750,52 @@ struct duckdb_extension_access {
 	//! Fetch the API
 	void* function(duckdb_extension_info info, const(char)* version_) get_api;
 }
+
+
+//===--------------------------------------------------------------------===//
+// Replacement Scans
+//===--------------------------------------------------------------------===//
+
+// Replacement Scan functions are defined here because omit @nogc/nothrow from function signatures.
+// With @nogc/nothrow, D client can't use practical code in callbacks.
+
+/*!
+Add a replacement scan definition to the specified database.
+
+* @param db The database object to add the replacement scan to
+* @param replacement The replacement scan callback
+* @param extra_data Extra data that is passed back into the specified callback
+* @param delete_callback The delete callback to call on the extra data, if any
+*/
+void duckdb_add_replacement_scan(duckdb_database db, duckdb_replacement_callback_t replacement, void* extra_data, duckdb_delete_callback_t delete_callback);
+
+/*!
+Sets the replacement function name. If this function is called in the replacement callback,
+the replacement scan is performed. If it is not called, the replacement callback is not performed.
+
+* @param info The info object
+* @param function_name The function name to substitute.
+*/
+void duckdb_replacement_scan_set_function_name(duckdb_replacement_scan_info info, const(char)* function_name);
+
+/*!
+Adds a parameter to the replacement scan function.
+
+* @param info The info object
+* @param parameter The parameter to add.
+*/
+void duckdb_replacement_scan_add_parameter(duckdb_replacement_scan_info info, duckdb_value parameter);
+
+/*!
+Report that an error has occurred while executing the replacement scan.
+
+* @param info The info object
+* @param error The error message
+*/
+void duckdb_replacement_scan_set_error(duckdb_replacement_scan_info info, const(char)* error);
+
+@nogc @trusted nothrow:
+extern(C): __gshared:
 
 //===--------------------------------------------------------------------===//
 // Functions
@@ -3461,6 +3506,7 @@ Report that an error has occurred while executing the function.
 */
 void duckdb_function_set_error(duckdb_function_info info, const(char)* error);
 
+/+
 //===--------------------------------------------------------------------===//
 // Replacement Scans
 //===--------------------------------------------------------------------===//
@@ -3499,6 +3545,7 @@ Report that an error has occurred while executing the replacement scan.
 * @param error The error message
 */
 void duckdb_replacement_scan_set_error(duckdb_replacement_scan_info info, const(char)* error);
++/
 
 //===--------------------------------------------------------------------===//
 // Profiling Info
