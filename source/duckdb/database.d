@@ -119,10 +119,10 @@ class Database
 
 import std.variant : Variant;
 
-extern(C): @trusted:
-
 // TODO : Delegate support
 alias ReplacementScanCallback = Variant function(string tableName, out string funcName);
+
+extern(C): @trusted:
 
 void delete_callback(void* data) nothrow {}
 
