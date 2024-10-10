@@ -28,6 +28,42 @@ void main()
 }
 ```
 
+## Prepared Statement
+
+```D
+import duckdb;
+import std;
+
+void main()
+{
+    auto db = new Database(null);  // null for in-memory database
+    auto conn = db.connect();
+
+    writeln(duckdbVersion);
+
+    conn.queryWithoutResult("CREATE TABLE integers (i SMALLINT, j BIGINT);");
+    auto stmt1 = conn.prepare("INSERT INTO integers VALUES ($i,  $j)");
+
+    foreach (i; 0..10) {
+        short n1 = cast(short)i;
+        long  n2 = long.max - i;
+        stmt1.bindInt16(1, n1);
+        stmt1.bindInt64(2, n2);
+        stmt1.execute();
+    }
+    stmt1.destroy();
+
+    auto stmt2 = conn.prepare("SELECT * FROM integers WHERE i BETWEEN ? AND ?;");
+    stmt2.bindValues(3, 8);  // bindValues is shorter than calling each bindXXX
+    foreach (short i, long j; stmt2.execute())
+        writeln(i, " : ", j);
+    stmt2.destroy();
+
+    conn.disconnect();
+    db.close();
+}
+```
+
 ## Appender: Faster bulk insertion
 
 ```D
@@ -108,8 +144,6 @@ Without `Nullable`, client returns `.init` value.
 
 - Support TODO DuckDB types
 - Support more APIs
-  - Prepared Statements
-  - and more
 - Improve API design
 - Add unittests
 

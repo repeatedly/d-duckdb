@@ -5,6 +5,7 @@ module duckdb.connection;
 import duckdb.c.duckdb;
 import duckdb.common;
 import duckdb.appender;
+import duckdb.prepared_statement;
 import duckdb.result;
 
 class Connection
@@ -64,6 +65,20 @@ class Connection
     duckdb_query_progress_type queryProgress() nothrow
     {
         return duckdb_query_progress(_conn);
+    }
+
+    PreparedStatement prepare(string q)
+    {
+        import std.conv : text;
+        import std.string : toStringz, fromStringz;
+
+        duckdb_prepared_statement stmt;
+        scope(failure) duckdb_destroy_prepare(&stmt);
+
+        if (duckdb_prepare(_conn, q.toStringz, &stmt) == DuckDBError)
+            onDuckDBException(text("Failed to create prepared statement: query = ", q, ", error = ", duckdb_prepare_error(stmt).fromStringz));
+
+        return new PreparedStatement(stmt);
     }
 
     Appender appender(string table, string schema = null)
