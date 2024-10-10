@@ -222,33 +222,15 @@ class PreparedStatement
             onPreparedStatementException("Failed to bind uint64");
     }
 
-    private static immutable BigInt Divisor = (BigInt(1) << 64);
-
     void bindHugeint(ulong index, in BigInt b)
     {
-        import std.bigint : divMod;
-        import std.stdio;
-
-        BigInt q, r;
-        divMod(b, Divisor, q, r);
-        if (r < 0) { // Phobos's divMod generates minus remainder but hugeint doesn't allow it.
-            q -= 1;
-            r += Divisor;
-        }
-        duckdb_hugeint hint = {lower : cast(ulong)r, upper : cast(long)q};
-        if (duckdb_bind_hugeint(_stmt, index, hint) == DuckDBError)
+        if (duckdb_bind_hugeint(_stmt, index, bigIntToHugeint(b)) == DuckDBError)
             onPreparedStatementException("Failed to bind hugeint");
     }
 
     void bindUhugeint(ulong index, in BigInt b)
     {
-        import std.bigint : divMod;
-
-        BigInt q, r;
-        divMod(b, Divisor, q, r);
-
-        duckdb_uhugeint uhint = {lower : cast(ulong)r, upper : cast(ulong)q};
-        if (duckdb_bind_uhugeint(_stmt, index, uhint) == DuckDBError)
+        if (duckdb_bind_uhugeint(_stmt, index, bigIntToUhugeint(b)) == DuckDBError)
             onPreparedStatementException("Failed to bind uhugeint");
     }
 
@@ -295,12 +277,8 @@ class PreparedStatement
 
     void bindTimestamp(ulong index, SysTime t)
     {
-        import std.datetime : unixTimeToStdTime;
-
-        enum EpochOffset = unixTimeToStdTime(0);
-        duckdb_timestamp ts = {(t.stdTime - EpochOffset) / 10};
-        if (duckdb_bind_timestamp(_stmt, index, ts) == DuckDBError)
-            onPreparedStatementException("Failed to bind Date");
+        if (duckdb_bind_timestamp(_stmt, index, sysTimeToTimestamp(t)) == DuckDBError)
+            onPreparedStatementException("Failed to bind Timestamp");
     }
 
     /*

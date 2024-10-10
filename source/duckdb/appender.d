@@ -172,33 +172,15 @@ class Appender
             onAppenderException("Failed to append uint64");
     }
 
-    private static immutable BigInt Divisor = (BigInt(1) << 64);
-
     void appendHugeint(in BigInt b)
     {
-        import std.bigint : divMod;
-        import std.stdio;
-
-        BigInt q, r;
-        divMod(b, Divisor, q, r);
-        if (r < 0) { // Phobos's divMod generates minus remainder but hugeint doesn't allow it.
-            q -= 1;
-            r += Divisor;
-        }
-        duckdb_hugeint hint = {lower : cast(ulong)r, upper : cast(long)q};
-        if (duckdb_append_hugeint(_app, hint) == DuckDBError)
+        if (duckdb_append_hugeint(_app, bigIntToHugeint(b)) == DuckDBError)
             onAppenderException("Failed to append hugeint");
     }
 
     void appendUhugeint(in BigInt b)
     {
-        import std.bigint : divMod;
-
-        BigInt q, r;
-        divMod(b, Divisor, q, r);
-
-        duckdb_uhugeint uhint = {lower : cast(ulong)r, upper : cast(ulong)q};
-        if (duckdb_append_uhugeint(_app, uhint) == DuckDBError)
+        if (duckdb_append_uhugeint(_app, bigIntToUhugeint(b)) == DuckDBError)
             onAppenderException("Failed to append uhugeint");
     }
 
@@ -245,12 +227,8 @@ class Appender
 
     void appendTimestamp(SysTime t)
     {
-        import std.datetime : unixTimeToStdTime;
-
-        enum EpochOffset = unixTimeToStdTime(0);
-        duckdb_timestamp ts = {(t.stdTime - EpochOffset) / 10};
-        if (duckdb_append_timestamp(_app, ts) == DuckDBError)
-            onAppenderException("Failed to append Date");
+        if (duckdb_append_timestamp(_app, sysTimeToTimestamp(t)) == DuckDBError)
+            onAppenderException("Failed to append timestamp");
     }
 
     /*
