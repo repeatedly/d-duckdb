@@ -158,3 +158,20 @@ void replacementCallback(duckdb_replacement_scan_info info, const(char)* tableNa
         return;
     }
 }
+
+unittest
+{
+    static Variant cb(string tableName, out string funcName) {
+        funcName = "range";
+        return Variant(10);
+    }
+
+    auto db = new Database(null);
+    db.addReplacementScan(&cb);
+    auto r = db.connect().query("SELECT * FROM unknown_table;");
+    int[] arr = [];
+
+    foreach (int n; r)
+        arr ~= n;
+    assert(arr == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+}
