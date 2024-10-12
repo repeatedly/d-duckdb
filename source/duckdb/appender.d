@@ -239,6 +239,36 @@ class Appender
     */
 }
 
+unittest
+{
+    import duckdb.database, duckdb.connection;
+    import std;
+
+    auto db = new Database(null);
+    auto conn = db.connect();
+
+    conn.queryWithoutResult("CREATE TABLE tests (i SMALLINT, ul UBIGINT, hi HUGEINT, d DOUBLE, str VARCHAR, b BLOB, date Date, ts TIMESTAMP);");
+    auto appender = conn.appender("tests");
+    assert(appender.numColumns == 8);
+    appender.appendRow(-1, uint.max, BigInt("-17014118346046923173168730371588410572"), 10.5,
+                       "hello", cast(byte[])[0, 1, 2], Date(2024, 1, 1), SysTime(DateTime(2010, 1, 2, 3, 4, 5), UTC()));
+    appender.destroy();
+
+    foreach (short i, ulong ul, BigInt bi, double d, string str, byte[] blob, Date date, SysTime ts; conn.query("SELECT * FROM tests;")) {
+        assert(i    == -1);
+        assert(ul   == uint.max);
+        assert(bi   == BigInt("-17014118346046923173168730371588410572"));
+        assert(d    == 10.5);
+        assert(str  == "hello");
+        assert(blob == [0, 1, 2]);
+        assert(date == Date(2024, 1, 1));
+        assert(ts   == SysTime(DateTime(2010, 1, 2, 3, 4, 5), UTC()));
+    }
+
+    conn.disconnect();
+    db.close();
+}
+
 private:
 
 noreturn onAppenderException(string msg) @safe pure
