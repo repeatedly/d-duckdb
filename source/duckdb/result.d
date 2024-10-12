@@ -120,6 +120,71 @@ class Result
     // TODO : Add InputRange support
 }
 
+unittest
+{
+    import duckdb.database, duckdb.connection;
+
+    auto db = new Database(null);
+    auto conn = db.connect();
+
+    conn.queryWithoutResult("CREATE TABLE integers (i INTEGER, j INTEGER);");
+    auto r = conn.query("SELECT * FROM integers;");
+
+    assert(r.columnNames == ["i", "j"]);
+}
+
+unittest
+{
+    import duckdb.database, duckdb.connection;
+    import std;
+
+    Result runQuery(string tableDef, string values)
+    {
+        auto db = new Database(null);
+        auto conn = db.connect();
+
+        conn.queryWithoutResult("CREATE TABLE tests " ~ tableDef ~ ";");
+        conn.queryWithoutResult("INSERT INTO tests VALUES " ~ values ~ ";");
+        return conn.query("SELECT * FROM tests;");
+    }
+
+    foreach (int a, Nullable!int b; runQuery("(i INTEGER, j INTEGER)", "(3, 4)")) {
+        assert(a == 3);
+        assert(b.get == 4);
+    }
+
+    foreach (BigInt a, BigInt b; runQuery("(i HUGEINT, j UHUGEINT)", "(-17014118346046923173168730371588410572, 34028236692093846346337460743176821145)")) {
+        assert(a == BigInt("-17014118346046923173168730371588410572"));
+        assert(b == BigInt("34028236692093846346337460743176821145"));
+    }
+
+    foreach (string[] a, int[] b; runQuery("(names VARCHAR[], ints INTEGER[3])", "(['abc'], [1, 2, 3])")) {
+        assert(a == ["abc"]);
+        assert(b == [1, 2, 3]);
+    }
+
+    foreach (string[int] m; runQuery("(mp MAP(INTEGER,  VARCHAR))", "(MAP {10 : 'hello'})"))
+        assert(m == [10 : "hello"]);
+
+    struct S { string v; int i; }
+    foreach (S s;runQuery("(s STRUCT(v VARCHAR, i INTEGER))", "(row('hello', 1))"))
+        assert(s == S("hello", 1));
+
+    foreach (Date d; runQuery("(d DATE)", "('2024-11-11')"))
+        assert(d == Date(2024, 11, 11));
+
+    foreach (SysTime t1, SysTime t2; runQuery("(t1 TIMESTAMP, t2 TIMESTAMP_S)", "('2024-09-20 11:30:00.123456789', '2024-09-20 11:30:00.123456789')")) {
+        assert(t1 == SysTime(DateTime(2024, 9, 20, 11, 30, 00), usecs(123456), UTC()));
+        assert(t2 == SysTime(DateTime(2024, 9, 20, 11, 30, 00), UTC()));
+    }
+
+    foreach (UUID u; runQuery("(uid UUID)", "('4ac7a9e9-607c-4c8a-84f3-843f0191e3fd')"))
+        assert(u == UUID("4ac7a9e9-607c-4c8a-84f3-843f0191e3fd"));
+
+    foreach (string b; runQuery("(bit BITSTRING)", "('101010')"))
+        assert(b == "101010");
+}
+
 private @trusted:
 
 // TODO : Split type check and extract value for the performance
