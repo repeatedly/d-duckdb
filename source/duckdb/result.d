@@ -5,6 +5,13 @@ module duckdb.result;
 import duckdb.c.duckdb;
 import duckdb.common;
 
+import std.exception : basicExceptionCtors;
+
+class DuckDBResultException : DuckDBException
+{
+    mixin basicExceptionCtors;
+}
+
 // struct is better?
 class Result
 {
@@ -65,7 +72,7 @@ class Result
         int r;
         idx_t n = duckdb_column_count(&_res);
         if (n != Args.length)
-            onDuckDBException("The number of columns and passed values are mismatched");
+            onDuckDBResultException("The number of columns and passed values are mismatched");
 
         while (true) {
             duckdb_data_chunk chunk = duckdb_fetch_chunk(_res);
@@ -112,6 +119,8 @@ class Result
 
     // TODO : Add InputRange support
 }
+
+private @trusted:
 
 // TODO : Split type check and extract value for the performance
 auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt, idx_t rowIndex)
@@ -225,7 +234,7 @@ auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt,
                 scope (exit) duckdb_free(ptr);
                 return cast(T)(ptr.fromStringz).dup;
             }
-            onDuckDBTypeException("Can't get enum value by unexpected data");
+            onDuckDBResultException("Can't get enum value by unexpected data");
         case DUCKDB_TYPE_BIT:
             auto str = (cast(duckdb_string_t*)data)[rowIndex];
             auto len = duckdb_string_t_length(str);
@@ -325,7 +334,7 @@ auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt,
         case DUCKDB_TYPE_TIMESTAMP_S:
             return createSysTimeFromVector(data, rowIndex, ts => SysTime.fromUnixTime(ts, UTC()));
         case DUCKDB_TYPE_TIMESTAMP_NS:
-            onDuckDBTypeException("TIMESTAMP_NS is not supported because D's SysTime doesn't support nano-second precision");
+            onDuckDBResultException("TIMESTAMP_NS is not supported because D's SysTime doesn't support nano-second precision");
         default:
             onVectorTypeMismatch(T.stringof, type);
         }
@@ -364,7 +373,7 @@ auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt,
         case DUCKDB_TYPE_STRUCT:
             auto numFields = duckdb_struct_type_child_count(lt);
             if (numFields != T.tupleof.length)
-                onDuckDBTypeException("D struct fields and duckdb struct fields are mismatched");
+                onDuckDBResultException("D struct fields and duckdb struct fields are mismatched");
 
             Result.VectorInfo[T.tupleof.length] fields;
             foreach (i, ref field; fields) {
@@ -391,16 +400,16 @@ auto getVectorValue(T)(duckdb_vector vector, void* data, duckdb_logical_type lt,
     }
 }
 
-@trusted:
+alias onDuckDBResultException = onDuckDBException!(DuckDBResultException);
 
 noreturn onVectorTypeMismatch(string dType, duckdb_type colType = DUCKDB_TYPE_INVALID)
 {
     import std.conv : text;
 
     if (colType == DUCKDB_TYPE_INVALID)
-        onDuckDBTypeException("Unsupported type: type = " ~ dType);
+        onDuckDBResultException("Unsupported type: type = " ~ dType);
     else
-        onDuckDBTypeException(text("Unmatched types: D type = ", dType, ", column type = ", colType));
+        onDuckDBResultException(text("Unmatched types: D type = ", dType, ", column type = ", colType));
 }
 
 const(char)[] getVectorCString(void* data, idx_t rowIndex) nothrow
