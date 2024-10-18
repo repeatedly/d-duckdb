@@ -106,8 +106,6 @@ class PreparedStatement
 
     void bindValues(Args...)(Args args)
     {
-        import std.stdio;
-
         if (args.length != duckdb_nparams(_stmt))
             onPreparedStatementException("The number of parameters and pass values are mismatched");
 
@@ -293,4 +291,36 @@ private:
 noreturn onPreparedStatementException(string msg) @safe pure
 {
     onDuckDBException!PreparedStatementException(msg);
+}
+
+unittest
+{
+    import duckdb.database, duckdb.connection;
+    import std.bigint, std.datetime;
+
+    auto db = new Database(null);
+    auto conn = db.connect();
+
+    conn.queryWithoutResult("CREATE TABLE tests (i SMALLINT, ul UBIGINT, hi HUGEINT, d DOUBLE, str VARCHAR, date Date, ts TIMESTAMP);");
+    auto stmt = conn.prepare("INSERT INTO tests VALUES ($i, $ul, $hi, $d, $str, $date, $ts)");
+    stmt.bindValues(100, 1, BigInt("10000000000"), 123456.789, "hello!", Date(1999, 9, 9), SysTime(DateTime(2010, 1, 2, 3, 4, 5),  UTC()));
+    stmt.execute();
+
+    auto r = conn.prepare("SELECT * FROM tests WHERE i = ?;");
+    assert(r.statementType == DUCKDB_STATEMENT_TYPE_SELECT);
+    assert(r.parameterTypes == [DUCKDB_TYPE_SMALLINT]);
+
+    r.bind(1, 100);
+    foreach (short i, ulong ul, BigInt bi, double d, string str, Date date, SysTime ts; r.execute()) {
+        assert(i == 100);
+        assert(ul == 1);
+        assert(bi == BigInt("10000000000"));
+        assert(d == 123456.789);
+        assert(str == "hello!");
+        assert(date == Date(1999, 9, 9));
+        assert(ts == SysTime(DateTime(2010, 1, 2, 3, 4, 5), UTC()));
+    }
+
+    conn.disconnect();
+    db.close();
 }
