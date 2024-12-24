@@ -66,22 +66,22 @@ class PreparedStatement
         return res;
     }
 
-    @property duckdb_type[] parameterTypes() nothrow
+    @property DataType[] parameterTypes() nothrow
     {
         import std.string : fromStringz;
 
         auto num = duckdb_nparams(_stmt);
-        auto res = new duckdb_type[](num);
+        auto res = new DataType[](num);
 
         foreach (i; 0..num)
-            res[i] = duckdb_param_type(_stmt, i + 1);
+            res[i] = DataTypeMap[duckdb_param_type(_stmt, i + 1)];
 
         return res;
     }
 
-    @property duckdb_statement_type statementType() nothrow
+    @property StatementType statementType() nothrow
     {
-        return duckdb_prepared_statement_type(_stmt);
+        return StatementTypeMap[duckdb_prepared_statement_type(_stmt)];
     }
 
     void clearBindings()
@@ -307,8 +307,8 @@ unittest
     stmt.execute();
 
     auto r = conn.prepare("SELECT * FROM tests WHERE i = ?;");
-    assert(r.statementType == DUCKDB_STATEMENT_TYPE_SELECT);
-    assert(r.parameterTypes == [DUCKDB_TYPE_SMALLINT]);
+    assert(r.statementType == StatementType.Select);
+    assert(r.parameterTypes == [DataType.Smallint]);
 
     r.bind(1, 100);
     foreach (short i, ulong ul, BigInt bi, double d, string str, Date date, SysTime ts; r.execute()) {

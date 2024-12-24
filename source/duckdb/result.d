@@ -34,14 +34,14 @@ class Result
         duckdb_destroy_result(&_res);
     }
 
-    duckdb_result_type resultType() nothrow @nogc
+    ResultType resultType() nothrow @nogc
     {
-        return duckdb_result_return_type(_res);
+        return ResultTypeMap[duckdb_result_return_type(_res)];
     }
 
-    duckdb_statement_type statementType() nothrow @nogc
+    StatementType statementType() nothrow @nogc
     {
-        return duckdb_result_statement_type(_res);
+        return StatementTypeMap[duckdb_result_statement_type(_res)];
     }
 
     string[] columnNames() nothrow @trusted
